@@ -40,6 +40,14 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+struct DirLight {
+    glm::vec3 direction;
+
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+};
+
 struct PointLight {
     glm::vec3 position;
     glm::vec3 ambient;
@@ -158,27 +166,41 @@ int main() {
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // build and compile shaders
     // -------------------------
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
-
+    Shader IslandShader("resources/shaders/2.model_lighting.vs", "resources/shaders/blending.fs");
     // load models
     // -----------
-    Model ourModel("resources/objects/backpack/backpack.obj");
-    ourModel.SetShaderTextureNamePrefix("material.");
+    stbi_set_flip_vertically_on_load(false);
+
+    Model model_Pikacu("resources/objects/permanently-p-ballooned-raichu/BALLOON RAICHU FBX/P-Ballooned BIG Raichu.fbx");
+    Model model_2("resources/objects/pokemon-go/source/pokemon_export.obj");
+    //Model model_2("resources/objects/bulbasaur/source/DaoNhatNam_Bulbasaur_final.fbx");
+    Model floatingIsland("resources/objects/floating-island/source/FloatingIsland/FloatingIsland.fbx");
+
+    model_Pikacu.SetShaderTextureNamePrefix("material.");
+    model_2.SetShaderTextureNamePrefix("material.");
+    floatingIsland.SetShaderTextureNamePrefix("material.");
+
 
     PointLight& pointLight = programState->pointLight;
     pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
-    pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
-    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
+    pointLight.ambient = glm::vec3(1.0, 1.0, 1.0);
+    pointLight.diffuse = glm::vec3(1.0, 1.0, 1.0);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 
     pointLight.constant = 1.0f;
     pointLight.linear = 0.09f;
     pointLight.quadratic = 0.032f;
 
-
+    DirLight direkcionoSvetlo;
+    direkcionoSvetlo.direction = glm::vec3 (1.0, 1.0, 1.0);
+    direkcionoSvetlo.ambient =  glm::vec3 (0.5, 0.5, 0.5);
+    direkcionoSvetlo.diffuse = glm::vec3 (0.7, 0.7, 0.7);
+    direkcionoSvetlo.specular = glm::vec3 (1.0, 1.0, 1.0);
 
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -204,6 +226,11 @@ int main() {
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
+        ourShader.setVec3("dirLight.direction", direkcionoSvetlo.direction);
+        ourShader.setVec3("dirLight.ambient", direkcionoSvetlo.ambient);
+        ourShader.setVec3("dirLight.diffuse", direkcionoSvetlo.diffuse);
+        ourShader.setVec3("dirLight.specular", direkcionoSvetlo.specular);
+
         pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
         ourShader.setVec3("pointLight.position", pointLight.position);
         ourShader.setVec3("pointLight.ambient", pointLight.ambient);
@@ -216,18 +243,48 @@ int main() {
         ourShader.setFloat("material.shininess", 32.0f);
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
-                                                (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+                                                (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 2000.0f);
         glm::mat4 view = programState->camera.GetViewMatrix();
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model,
-                               programState->backpackPosition); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(programState->backpackScale));    // it's a bit too big for our scene, so scale it down
+        model = glm::translate(model, glm::vec3(9.42f, -8.44f, -4.15f)); // translate it down so it's at the center of the scene
+        model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        model = glm::scale(model, glm::vec3(0.015f));    // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
-        ourModel.Draw(ourShader);
+        model_Pikacu.Draw(ourShader);
+
+        glm::mat4 model2 = glm::mat4(1.0f);
+        model2 = glm::translate(model2, glm::vec3(10.1f, -6.98f, -6.9f));
+        model2 = glm::rotate(model2, glm::radians(-50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        model2 = glm::scale(model2, glm::vec3(0.1f));
+        ourShader.setMat4("model", model2);
+        model_2.Draw(ourShader);
+
+        IslandShader.use();
+        IslandShader.setVec3("dirLight.direction", direkcionoSvetlo.direction);
+        IslandShader.setVec3("dirLight.ambient", direkcionoSvetlo.ambient);
+        IslandShader.setVec3("dirLight.diffuse", direkcionoSvetlo.diffuse);
+        IslandShader.setVec3("dirLight.specular", direkcionoSvetlo.specular);
+        IslandShader.setVec3("viewPosition", programState->camera.Position);
+        IslandShader.setFloat("material.shininess", 32.0f);
+
+        IslandShader.setMat4("projection", projection);
+        IslandShader.setMat4("view", view);
+
+        glm::mat4 model3 = glm::mat4 (1.0f);
+        model3 = glm::translate(model3, glm::vec3(10.0f, -10.0f, -7.0f));
+        model3 = glm::scale(model3, glm::vec3(3.0f));
+        IslandShader.setMat4("model", model3);
+        glEnable(GL_BLEND);
+        floatingIsland.Draw(IslandShader);
+        glDisable(GL_BLEND);
+
+
+
 
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
@@ -265,6 +322,14 @@ void processInput(GLFWwindow *window) {
         programState->camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         programState->camera.ProcessKeyboard(RIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
+        programState->camera.changeMovementSpeed(1);
+    if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
+        programState->camera.changeMovementSpeed(-1);
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        programState->camera.ProcessKeyboard(UP, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        programState->camera.ProcessKeyboard(DOWN, deltaTime);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes

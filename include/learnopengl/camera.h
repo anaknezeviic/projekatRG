@@ -12,7 +12,9 @@ enum Camera_Movement {
     FORWARD,
     BACKWARD,
     LEFT,
-    RIGHT
+    RIGHT,
+    UP,
+    DOWN
 };
 
 // Default camera values
@@ -78,6 +80,10 @@ public:
             Position -= Right * velocity;
         if (direction == RIGHT)
             Position += Right * velocity;
+        if(direction == UP)
+            Position += Up * velocity;
+        if(direction == DOWN)
+            Position -= Up * velocity;
     }
 
     // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
@@ -110,6 +116,16 @@ public:
             Zoom = 1.0f;
         if (Zoom > 45.0f)
             Zoom = 45.0f; 
+    }
+
+    void changeMovementSpeed(int direction){
+        if(direction == -1 && MovementSpeed >= 1.5f){
+            MovementSpeed -= 0.25f;
+        }
+
+        if(direction == 1){
+            MovementSpeed += 0.25f;
+        }
     }
 
 private:

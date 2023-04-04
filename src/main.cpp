@@ -26,9 +26,12 @@ void processInput(GLFWwindow *window);
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
+
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+bool blinn = false;
+bool blinnKeyPressed = false;
 
 // camera
 
@@ -163,6 +166,55 @@ int main() {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
+    //face culling
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+    glFrontFace(GL_CCW);
+    float cubeVertices[] = {
+            // back face
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+            0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+            // front face
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+            // left face
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            // right face
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            // bottom face
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            // top face
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+    };
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
@@ -178,16 +230,16 @@ int main() {
 
     Model model_Pikacu("resources/objects/permanently-p-ballooned-raichu/BALLOON RAICHU FBX/P-Ballooned BIG Raichu.fbx");
     Model model_2("resources/objects/pokemon-go/source/pokemon_export.obj");
-    //Model model_2("resources/objects/bulbasaur/source/DaoNhatNam_Bulbasaur_final.fbx");
     Model floatingIsland("resources/objects/floating-island/source/FloatingIsland/FloatingIsland.fbx");
+    Model chineseLamp("resources/objects/chinese-lamp/source/ChineseLamp.fbx");
 
     model_Pikacu.SetShaderTextureNamePrefix("material.");
     model_2.SetShaderTextureNamePrefix("material.");
     floatingIsland.SetShaderTextureNamePrefix("material.");
-
+    chineseLamp.SetShaderTextureNamePrefix("material.");
 
     PointLight& pointLight = programState->pointLight;
-    pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
+    pointLight.position = glm::vec3(10.27f, -3.9f, -7.4f);
     pointLight.ambient = glm::vec3(1.0, 1.0, 1.0);
     pointLight.diffuse = glm::vec3(1.0, 1.0, 1.0);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
@@ -204,6 +256,8 @@ int main() {
 
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    //advanced light
 
     // render loop
     // -----------
@@ -240,6 +294,9 @@ int main() {
         ourShader.setFloat("pointLight.linear", pointLight.linear);
         ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
         ourShader.setVec3("viewPosition", programState->camera.Position);
+
+        //advanced lighting
+
         ourShader.setFloat("material.shininess", 32.0f);
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
@@ -247,6 +304,10 @@ int main() {
         glm::mat4 view = programState->camera.GetViewMatrix();
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
+
+
+
+
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
@@ -283,6 +344,12 @@ int main() {
         floatingIsland.Draw(IslandShader);
         glDisable(GL_BLEND);
 
+        glm::mat4 model4 = glm::mat4(1.0f);
+        model4 = glm::translate(model4, glm::vec3(10.34f, -3.68f, -7.57f));
+        model4 = glm::rotate(model4, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        model4 = glm::scale(model4, glm::vec3(0.2f));
+        ourShader.setMat4("model", model4);
+        chineseLamp.Draw(ourShader);
 
 
 
@@ -290,12 +357,15 @@ int main() {
             DrawImGui(programState);
 
 
-
+        //std::cout << (blinn ? "Blinn-Phong" : "Phong") << std::endl;
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    //deleting vbo and vao
+
 
     programState->SaveToFile("resources/program_state.txt");
     delete programState;
@@ -330,6 +400,8 @@ void processInput(GLFWwindow *window) {
         programState->camera.ProcessKeyboard(UP, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
         programState->camera.ProcessKeyboard(DOWN, deltaTime);
+
+
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -411,3 +483,4 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         }
     }
 }
+

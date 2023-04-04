@@ -191,6 +191,7 @@ private:
         {
             aiString str;
             mat->GetTexture(type, i, &str);
+            //std::cerr << "Ucitavam teksturu sa " << str.C_Str() << endl;
             // check if texture was loaded before and if so, continue to next iteration: skip loading a new texture
             bool skip = false;
             for(unsigned int j = 0; j < textures_loaded.size(); j++)
@@ -220,7 +221,23 @@ private:
 unsigned int TextureFromFile(const char *path, const string &directory, bool gamma)
 {
     string filename = string(path);
-    filename = directory + '/' + filename;
+
+    size_t poz = filename.find('\\');
+
+    while (poz != string::npos) {
+        filename[poz] = '/';
+        poz = filename.find('\\');
+    }
+
+    string imeFajla;
+    poz = filename.find_last_of('/');
+    imeFajla = &filename[poz + 1];
+
+    //std::cerr << "Ime fajla: " << imeFajla << endl;
+
+    filename = directory + '/' + imeFajla;
+
+    //std::cerr << "Putanja: " << filename << endl;
 
     unsigned int textureID;
     glGenTextures(1, &textureID);

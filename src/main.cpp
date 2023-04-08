@@ -24,14 +24,15 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 
 void processInput(GLFWwindow *window);
 
+unsigned int loadCubemap(vector<std::string> faces);
+
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
 
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
-bool blinn = false;
-bool blinnKeyPressed = false;
+
 
 // camera
 
@@ -170,60 +171,85 @@ int main() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    glFrontFace(GL_CCW);
-    float cubeVertices[] = {
-            // back face
-            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-            0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-            // front face
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-            // left face
-            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-            -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-            // right face
-            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-            0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-            // bottom face
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-            0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-            // top face
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-    };
+   // glFrontFace(GL_CCW);
+
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     // build and compile shaders
     // -------------------------
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
     Shader IslandShader("resources/shaders/2.model_lighting.vs", "resources/shaders/blending.fs");
+    Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
+
+    float skyboxVertices[] = {
+            // positions
+            -1.0f,  1.0f, -1.0f,
+            -1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+
+            -1.0f, -1.0f,  1.0f,
+            -1.0f, -1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f,  1.0f,
+            -1.0f, -1.0f,  1.0f,
+
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+
+            -1.0f, -1.0f,  1.0f,
+            -1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f, -1.0f,  1.0f,
+            -1.0f, -1.0f,  1.0f,
+
+            -1.0f,  1.0f, -1.0f,
+            1.0f,  1.0f, -1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            -1.0f,  1.0f,  1.0f,
+            -1.0f,  1.0f, -1.0f,
+
+            -1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f,  1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f,  1.0f,
+            1.0f, -1.0f,  1.0f
+    };
+    unsigned int skyboxVAO, skyboxVBO;
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+    //skybox textures
+    vector<std::string> faces {
+            FileSystem::getPath("resources/textures/skybox1/left.png"),
+            FileSystem::getPath("resources/textures/skybox1/right.png"),
+            FileSystem::getPath("resources/textures/skybox1/bottom.png"),
+            FileSystem::getPath("resources/textures/skybox1/top.png"),
+            FileSystem::getPath("resources/textures/skybox1/front.png"),
+            FileSystem::getPath("resources/textures/skybox1/back.png")
+    };
+    unsigned int cubemapTexture = loadCubemap(faces);
+
     // load models
     // -----------
     stbi_set_flip_vertically_on_load(false);
@@ -254,11 +280,14 @@ int main() {
     direkcionoSvetlo.diffuse = glm::vec3 (0.7, 0.7, 0.7);
     direkcionoSvetlo.specular = glm::vec3 (1.0, 1.0, 1.0);
 
+
+
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    //advanced light
 
+    skyboxShader.use();
+    skyboxShader.setInt("skybox", 0);
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window)) {
@@ -345,19 +374,30 @@ int main() {
         glDisable(GL_BLEND);
 
         glm::mat4 model4 = glm::mat4(1.0f);
-        model4 = glm::translate(model4, glm::vec3(10.34f, -3.68f, -7.57f));
+        model4 = glm::translate(model4, glm::vec3(10.14f, -3.8f, -7.6f));
         model4 = glm::rotate(model4, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        model4 = glm::scale(model4, glm::vec3(0.2f));
+        model4 = glm::scale(model4, glm::vec3(0.4f));
         ourShader.setMat4("model", model4);
         chineseLamp.Draw(ourShader);
+
+
 
 
 
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
 
-
-        //std::cout << (blinn ? "Blinn-Phong" : "Phong") << std::endl;
+        glDepthMask(GL_FALSE);
+        glDepthFunc(GL_LEQUAL);
+        skyboxShader.use();
+        skyboxShader.setMat4("view", glm::mat4(glm::mat3( programState->camera.GetViewMatrix())));
+        skyboxShader.setMat4("projection", projection);
+        glBindVertexArray(skyboxVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glDepthFunc(GL_LESS);
+        glDepthMask(GL_TRUE);
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
@@ -374,6 +414,10 @@ int main() {
     ImGui::DestroyContext();
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
+
+    glDeleteVertexArrays(1, &skyboxVAO);
+    glDeleteBuffers(1, &skyboxVAO);
+
     glfwTerminate();
     return 0;
 }
@@ -471,6 +515,34 @@ void DrawImGui(ProgramState *programState) {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
+
+
+unsigned int loadCubemap(vector<std::string> faces) {
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+    for (unsigned int i = 0; i < faces.size(); i++) {
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data) {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        }
+        else {
+            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+        }
+
+        stbi_image_free(data);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
+}
+
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {

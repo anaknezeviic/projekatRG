@@ -355,28 +355,38 @@ int main() {
 
     PointLight& pointLight = programState->pointLight;
     pointLight.position = glm::vec3(10.27f, -4.33f, -7.4f);
-    pointLight.ambient = glm::vec3(0.1f, 0.1f, 0.1f);
-    pointLight.diffuse = glm::vec3(1.0f, 0.0f, 0.0f);
-    pointLight.specular = glm::vec3(1.0f, 0.0f, 0.0f);
+    pointLight.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
+    pointLight.diffuse = glm::vec3(0.0f, 0.2f, 0.5f);
+    pointLight.specular = glm::vec3(0.0f, 0.2f, 0.5f);
 
     pointLight.constant = 1.0f;
     pointLight.linear = 0.0f;
     pointLight.quadratic = 0.0f;
 
     DirLight direkcionoSvetlo;
-    direkcionoSvetlo.direction = glm::vec3 (1.0f, 1.0f, 1.0f);
-    direkcionoSvetlo.ambient =  glm::vec3 (0.003f, 0.003f, 0.003f);
-    direkcionoSvetlo.diffuse = glm::vec3 (0.3f, 0.3f, 0.3f);
-    direkcionoSvetlo.specular = glm::vec3 (0.3f, 0.3f, 0.3f);
+    direkcionoSvetlo.direction = glm::vec3 (10.0f, -3.0f, 1.0f);
+    direkcionoSvetlo.ambient =  glm::vec3 (0.008f, 0.008f, 0.008f);
+    direkcionoSvetlo.diffuse = glm::vec3 (0.1f, 0.1f, 0.1f);
+    direkcionoSvetlo.specular = glm::vec3 (0.1f, 0.1f, 0.1f);
 
 
 
     // draw in wireframe
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    blurShader.use();
+    blurShader.setInt("image", 0);
+
+    bloomShader.use();
+    bloomShader.setInt("scene", 0);
+    bloomShader.setInt("bloomBlur", 1);
+    bloomShader.setFloat("bloomThreshold", 0.5f);
 
 
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
+
+    hdrShader.use();
+    hdrShader.setInt("hdrBuffer", 0);
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window)) {
@@ -408,12 +418,12 @@ int main() {
 
        // pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
         ourShader.setVec3("pointLight.position", glm::vec3(10.14f, -4.8f, -7.6f));
-        ourShader.setVec3("pointLight.ambient", glm::vec3(0.5f, 0.5f, 0.5f));
-        ourShader.setVec3("pointLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
-        ourShader.setVec3("pointLight.specular", glm::vec3(0.5f, 0.5f, 0.5f));
-        ourShader.setFloat("pointLight.constant", 1.0f);
-        ourShader.setFloat("pointLight.linear", 0.0f);
-        ourShader.setFloat("pointLight.quadratic", 0.0f);
+        ourShader.setVec3("pointLight.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
+        ourShader.setVec3("pointLight.diffuse", glm::vec3(0.0f, 0.5f, 0.5f));
+        ourShader.setVec3("pointLight.specular", glm::vec3(0.0f, 0.5f, 0.5f));
+        ourShader.setFloat("pointLight.constant", pointLight.constant);
+        ourShader.setFloat("pointLight.linear", pointLight.linear);
+        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
         ourShader.setVec3("viewPosition", programState->camera.Position);
 
         //advanced lighting
@@ -503,7 +513,7 @@ int main() {
         // 2. blur bright fragments with two-pass Gaussian Blur
         // --------------------------------------------------
         bool horizontal = true, first_iteration = true;
-        unsigned int amount = 10;
+        unsigned int amount = 40;
         blurShader.use();
         for (unsigned int i = 0; i < amount; i++)
         {
@@ -532,8 +542,11 @@ int main() {
         glBindVertexArray(0);
         bloomShader.setInt("bloom", bloom);
         bloomShader.setFloat("exposure", exposure);
+        hdrShader.setInt("hdr", hdr);
+        hdrShader.setFloat("exposure", exposure);
         renderQuad();
 
+        std::cout << "hdr: " << (hdr ? "on" : "off") << "| exposure: " << exposure << std::endl;
 
 
 
@@ -590,6 +603,27 @@ void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
         programState->camera.ProcessKeyboard(DOWN, deltaTime);
 
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !hdrKeyPressed)
+    {
+        hdr = !hdr;
+        hdrKeyPressed = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
+    {
+        hdrKeyPressed = false;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    {
+        if (exposure > 0.0f)
+            exposure -= 0.001f;
+        else
+            exposure = 0.0f;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+    {
+        exposure += 0.001f;
+    }
 
 }
 

@@ -19,4 +19,3 @@ Apart from the basic lessons, there are also Cubemaps, HDR and Bloom.
 Depending on whether you want hdr on or not, you can press the space button. 
 Press the Q button to decrease the exposure, and E to increase.
 
-https://youtu.be/dwsrprk6oxw 
